@@ -1,0 +1,50 @@
+// telegram.js
+const axios = require('axios');
+const axiosRetry = require('axios-retry');
+
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+
+if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    console.error('Pastikan TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID diatur di file .env');
+    process.exit(1); 
+}
+
+// Auto retry jika gagal konek
+axiosRetry(axios, { retries: 3, retryDelay: axiosRetry.exponentialDelay });
+
+/**
+ * Kirim pesan text ke Telegram
+ */
+async function sendTelegram(message, chatId = TELEGRAM_CHAT_ID, parseMode = 'Markdown') {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    try {
+        await axios.post(url, {
+            chat_id: chatId,
+            text: message,
+            parse_mode: parseMode
+        });
+        console.log(`Pesan Telegram berhasil dikirim ke ${chatId}.`);
+    } catch (error) {
+        console.error('Gagal mengirim pesan Telegram:', error.response?.data || error.message);
+    }
+}
+
+/**
+ * Kirim foto ke Telegram
+ */
+async function sendPhoto(photoUrl, caption = '', chatId = TELEGRAM_CHAT_ID) {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendPhoto`;
+    try {
+        await axios.post(url, {
+            chat_id: chatId,
+            photo: photoUrl,
+            caption
+        });
+        console.log('Foto berhasil dikirim ke Telegram.');
+    } catch (error) {
+        console.error('Gagal mengirim foto Telegram:', error.response?.data || error.message);
+    }
+}
+
+module.exports = { sendTelegram, sendPhoto };
